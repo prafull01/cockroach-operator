@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"errors"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -71,7 +72,7 @@ func (r *CrdbCluster) Default() {
 		r.Spec.MaxUnavailable = &DefaultMaxUnavailable
 	}
 
-	if r.Spec.Image.PullPolicyName == nil {
+	if r.Spec.Image != nil && r.Spec.Image.PullPolicyName == nil {
 		policy := v1.PullIfNotPresent
 		r.Spec.Image.PullPolicyName = &policy
 	}
@@ -83,6 +84,9 @@ func (r *CrdbCluster) Default() {
 func (r *CrdbCluster) ValidateCreate() error {
 	webhookLog.Info("validate create", "name", r.Name)
 
+	if r.Spec.CockroachDBVersion == "" && (r.Spec.Image == nil || r.Spec.Image.Name == "") {
+		return errors.New("you have to provide the cockroachDBVersion or cockroach image")
+	}
 	return nil
 }
 

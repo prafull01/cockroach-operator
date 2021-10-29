@@ -34,7 +34,7 @@ func TestCrdbClusterDefault(t *testing.T) {
 		HTTPPort:       &DefaultHTTPPort,
 		SQLPort:        &DefaultSQLPort,
 		MaxUnavailable: &maxUnavailable,
-		Image:          PodImage{PullPolicyName: &policy},
+		Image:          &PodImage{PullPolicyName: &policy},
 	}
 
 	cluster.Default()
