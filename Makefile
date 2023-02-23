@@ -363,3 +363,16 @@ PKG_MAN_OPTS ?= "$(PKG_CHANNELS) $(PKG_DEFAULT_CHANNEL)"
 .PHONY: release/generate-bundle
 release/generate-bundle:
 	bazel run //hack:bundle -- $(RH_BUNDLE_VERSION) $(RH_OPERATOR_IMAGE) $(PKG_MAN_OPTS) $(RH_COCKROACH_DATABASE_IMAGE)
+
+.PHONY: release/publish-operator
+publish-operator:
+	./build/release/teamcity-publish-release.sh
+
+.PHONY: release/publish-operator-openshift
+publish-operator-openshift:
+	./build/release/teamcity-publish-openshift.sh
+
+.PHONY: release/publish-openshift-bundle
+release/publish-openshift-bundle:
+	./build/release/teamcity-publish-openshift-bundle.sh
+
