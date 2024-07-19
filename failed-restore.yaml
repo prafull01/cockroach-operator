@@ -1,0 +1,200 @@
+apiVersion: triliovault.trilio.io/v1
+kind: Restore
+metadata:
+  annotations:
+    triliovault.trilio.io/creator: kube:admin
+    triliovault.trilio.io/instance-id: 54ff73dc-6c1b-4f85-93f7-0cefde4b4579
+    triliovault.trilio.io/restore-source: openshift-operators/crdb-backup-1
+    triliovault.trilio.io/source-backup: openshift-operators/crdb-backup-1
+    triliovault.trilio.io/updater: '[{"username":"system:serviceaccount:test-restore:triliovault-restore-68be13e5-1c40-4099-9d9d-a77c6d5af31f","lastUpdatedTimestamp":"2023-08-21T04:39:49.614624554Z"}]'
+  creationTimestamp: "2023-08-21T04:39:12Z"
+  generation: 1
+  labels:
+    app.kubernetes.io/managed-by: k8s-triliovault-ui
+    app.kubernetes.io/name: k8s-triliovault
+    app.kubernetes.io/part-of: k8s-triliovault
+    triliovault.trilio.io/source: Backup
+  name: crestore-1
+  namespace: test-restore
+  resourceVersion: "14698305"
+  uid: 68be13e5-1c40-4099-9d9d-a77c6d5af31f
+spec:
+  actionFlags: {}
+  restoreFlags:
+    skipIfAlreadyExists: true
+  skipIfAlreadyExists: true
+  source:
+    location: f6e5c325-051e-43e6-b37f-0d34dd4bcbcb/e29e92e4-8a7c-4a84-979a-8f735738de57
+    target:
+      apiVersion: triliovault.trilio.io/v1
+      kind: Target
+      name: sample-target
+      namespace: test-restore
+      resourceVersion: "14696407"
+      uid: 2cefbdc4-e881-4c0e-9de1-e1390e98edee
+    type: Location
+status:
+  applicationType: Operator
+  completionTimestamp: "2023-08-21T04:41:52Z"
+  condition:
+  - phase: TargetValidation
+    reason: TargetValidation InProgress
+    status: InProgress
+    timestamp: "2023-08-21T04:39:12Z"
+  - phase: TargetValidation
+    reason: TargetValidation Completed
+    status: Completed
+    timestamp: "2023-08-21T04:39:21Z"
+  - phase: Validation
+    reason: Validation InProgress
+    status: InProgress
+    timestamp: "2023-08-21T04:39:22Z"
+  - phase: Validation
+    reason: Validation Completed
+    status: Completed
+    timestamp: "2023-08-21T04:39:52Z"
+  - phase: PrimitiveMetadataRestore
+    reason: PrimitiveMetadataRestore InProgress
+    status: InProgress
+    timestamp: "2023-08-21T04:39:52Z"
+  - phase: PrimitiveMetadataRestore
+    reason: PrimitiveMetadataRestore Completed
+    status: Completed
+    timestamp: "2023-08-21T04:40:24Z"
+  - phase: DataRestore
+    reason: DataRestore InProgress
+    status: InProgress
+    timestamp: "2023-08-21T04:40:24Z"
+  - phase: DataRestore
+    reason: DataRestore Completed
+    status: Completed
+    timestamp: "2023-08-21T04:41:10Z"
+  - phase: MetadataRestore
+    reason: MetadataRestore InProgress
+    status: InProgress
+    timestamp: "2023-08-21T04:41:10Z"
+  - phase: MetadataRestore
+    reason: MetadataRestore Completed
+    status: Completed
+    timestamp: "2023-08-21T04:41:52Z"
+  duration: 2m40s
+  percentageCompletion: 100
+  phase: MetadataRestore
+  phaseStatus: Completed
+  restoreApplication:
+    operators:
+    - snapshot:
+        dataSnapshots:
+        - conditions:
+          - phase: DataRestore
+            reason: DataRestore InProgress
+            status: InProgress
+            timestamp: "2023-08-21T04:40:24Z"
+          - phase: DataRestore
+            reason: DataRestore Completed
+            status: Completed
+            timestamp: "2023-08-21T04:41:10Z"
+          location: f6e5c325-051e-43e6-b37f-0d34dd4bcbcb/e29e92e4-8a7c-4a84-979a-8f735738de57/operator/cockroachdb-certified/data-snapshot/datadir-crdb-tls-example-0
+          persistentVolumeClaimName: datadir-crdb-tls-example-0
+          podContainersMap:
+          - containers:
+            - db
+            podName: crdb-tls-example-0
+          pvSize: "0"
+          size: "225683102"
+          snapshotSize: "0"
+        - conditions:
+          - phase: DataRestore
+            reason: DataRestore InProgress
+            status: InProgress
+            timestamp: "2023-08-21T04:40:24Z"
+          - phase: DataRestore
+            reason: DataRestore Completed
+            status: Completed
+            timestamp: "2023-08-21T04:41:02Z"
+          location: f6e5c325-051e-43e6-b37f-0d34dd4bcbcb/e29e92e4-8a7c-4a84-979a-8f735738de57/operator/cockroachdb-certified/data-snapshot/datadir-crdb-tls-example-1
+          persistentVolumeClaimName: datadir-crdb-tls-example-1
+          podContainersMap:
+          - containers:
+            - db
+            podName: crdb-tls-example-1
+          pvSize: "0"
+          size: "257297583"
+          snapshotSize: "0"
+        - conditions:
+          - phase: DataRestore
+            reason: DataRestore InProgress
+            status: InProgress
+            timestamp: "2023-08-21T04:40:24Z"
+          - phase: DataRestore
+            reason: DataRestore Completed
+            status: Completed
+            timestamp: "2023-08-21T04:41:07Z"
+          location: f6e5c325-051e-43e6-b37f-0d34dd4bcbcb/e29e92e4-8a7c-4a84-979a-8f735738de57/operator/cockroachdb-certified/data-snapshot/datadir-crdb-tls-example-2
+          persistentVolumeClaimName: datadir-crdb-tls-example-2
+          podContainersMap:
+          - containers:
+            - db
+            podName: crdb-tls-example-2
+          pvSize: "0"
+          size: "257626947"
+          snapshotSize: "0"
+        olm:
+          test-restore/cockroachdb-certified:
+            olmResources:
+            - groupVersionKind:
+                group: operators.coreos.com
+                kind: OperatorGroup
+                version: v1
+              objects:
+              - global-operators
+            - groupVersionKind:
+                group: operators.coreos.com
+                kind: Subscription
+                version: v1alpha1
+              objects:
+              - cockroachdb-certified
+        operatorId: cockroachdb-certified
+      status:
+        existingResource:
+        - groupVersionKind:
+            group: apiextensions.k8s.io
+            kind: CustomResourceDefinition
+            version: v1
+          objects:
+          - crdbclusters.crdb.cockroachlabs.com
+        phase: MetadataRestore
+        phaseStatus: Completed
+        reason: Restore MetaData Operation Successful
+        skippedResources:
+        - groupVersionKind:
+            group: storage.k8s.io
+            kind: StorageClass
+            version: v1
+          objects:
+          - standard-csi
+        - groupVersionKind:
+            group: apiextensions.k8s.io
+            kind: CustomResourceDefinition
+            version: v1
+          objects:
+          - crdbclusters.crdb.cockroachlabs.com
+  restoreScope: App
+  size: "740607632"
+  startTimestamp: "2023-08-21T04:39:12Z"
+  stats:
+    backup:
+      apiVersion: triliovault.trilio.io/v1
+      kind: Backup
+      name: crdb-backup-1
+      namespace: openshift-operators
+      resourceVersion: "14696417"
+      uid: e29e92e4-8a7c-4a84-979a-8f735738de57
+    backupPlan:
+      apiVersion: triliovault.trilio.io/v1
+      kind: BackupPlan
+      name: cockroachdb-bplan
+      namespace: openshift-operators
+      resourceVersion: "14467344"
+      uid: f6e5c325-051e-43e6-b37f-0d34dd4bcbcb
+  status: Completed

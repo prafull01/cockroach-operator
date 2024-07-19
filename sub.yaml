@@ -1,0 +1,11 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: cockroach-certified
+  namespace: cockroach-1 
+spec:
+  channel: stable
+  installPlanApproval: Automatic
+  name: cockroachdb-certified
+  source: certified-operators
+  sourceNamespace: openshift-marketplace
