@@ -64,6 +64,46 @@ gazelle_dependencies()
 # gazelle:repository_macro hack/build/repos.bzl%_go_dependencies
 go_dependencies()
 
+################################
+# begin rules_oci dependencies #
+################################
+http_archive(
+    name = "aspect_bazel_lib",
+    sha256 = "d0529773764ac61184eb3ad3c687fb835df5bee01afedf07f0cf1a45515c96bc",
+    strip_prefix = "bazel-lib-1.42.3",
+    url = "https://storage.googleapis.com/public-bazel-artifacts/bazel/bazel-lib-v1.42.3.tar.gz",
+)
+
+http_archive(
+    name = "rules_oci",
+    sha256 = "21a7d14f6ddfcb8ca7c5fc9ffa667c937ce4622c7d2b3e17aea1ffbc90c96bed",
+    strip_prefix = "rules_oci-1.4.0",
+    url = "https://storage.googleapis.com/public-bazel-artifacts/bazel/rules_oci-v1.4.0.tar.gz",
+)
+
+# bazel_skylib handled above.
+# aspect_bazel_lib handled above.
+
+load("@rules_oci//oci:dependencies.bzl", "rules_oci_dependencies")
+load("@rules_oci//oci:pull.bzl", "oci_pull")
+
+rules_oci_dependencies()
+
+# TODO: This will pull from an upstream location: specifically it will download
+# `crane` from https://github.com/google/go-containerregistry/... Before this is
+# used in CI or anything production-ready, this should be mirrored. rules_oci
+# doesn't support this mirroring yet so we'd have to submit a patch.
+load("@rules_oci//oci:repositories.bzl", "LATEST_CRANE_VERSION", "oci_register_toolchains")
+
+oci_register_toolchains(
+    name = "oci",
+    crane_version = LATEST_CRANE_VERSION,
+)
+
+##############################
+# end rules_oci dependencies #
+##############################
+
 ######################################
 # Load rules_docker and dependencies #
 ######################################
@@ -86,18 +126,18 @@ load("@io_bazel_rules_docker//repositories:deps.bzl", container_deps = "deps")
 container_deps()
 
 load(
-    "@io_bazel_rules_docker//container:container.bzl",
-    "container_pull",
-)
-load(
     "@io_bazel_rules_docker//go:image.bzl",
     _go_image_repos = "repositories",
 )
 
 _go_image_repos()
 
-container_pull(
+oci_pull(
     name = "redhat_ubi_minimal",
+    platforms = [
+        "linux/amd64",
+        "linux/arm64",
+    ],
     registry = "registry.access.redhat.com",
     repository = "ubi8/ubi-minimal",
     tag = "latest",

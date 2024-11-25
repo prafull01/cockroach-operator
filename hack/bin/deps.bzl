@@ -13,8 +13,8 @@
 # limitations under the License.
 
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file", "http_archive")
-load("@io_bazel_rules_docker//container:container.bzl", "container_pull")
 load("@bazel_gazelle//:deps.bzl", "go_repository")
+load("@rules_pkg//:pkg.bzl", "pkg_tar")
 
 # This controls the version for all openshift binaries (opm, oc, opernshift-install, etc.)
 OPENSHIFT_VERSION = "4.10.18"
@@ -456,13 +456,13 @@ def install_preflight():
 def install_crdb():
     http_archive(
        name = "crdb_darwin", # todo fix or remove
-       sha256 = "bbbd0a75f81d3df4acd139fdc7f0961480161454db24f25263c9276c3959db54",
-       urls = ["https://binaries.cockroachdb.com/cockroach-v21.2.0.darwin-10.9-amd64.tgz"],
+       sha256 = "79fb1669678b802ae891ec3e005efa801c0f970fec4eb6af7ac89cdb6b991b42",
+       urls = ["https://binaries.cockroachdb.com/cockroach-v22.2.19.darwin-10.9-amd64.tgz"],
        build_file_content = """
 filegroup(
     name = "file",
     srcs = [
-        "cockroach-v21.2.0.darwin-10.9-amd64/cockroach",
+        "cockroach-v22.2.19.darwin-10.9-amd64/cockroach",
     ],
     visibility = ["//visibility:public"],
 )
@@ -470,14 +470,29 @@ filegroup(
    )
 
     http_archive(
-        name = "crdb_linux",
-        sha256 = "c9fda447b9db98ade4444f5855ceb6ffe94549a20bd7cad8fdf70c398add8c02",
-        urls = ["https://binaries.cockroachdb.com/cockroach-v21.2.0.linux-amd64.tgz"],
+           name = "crdb_linux_arm64",
+           sha256 = "9fefea6e5c9715396648bb8865f55b10946b758de7997ccddb4876db56bcbb7a",
+           urls = ["https://binaries.cockroachdb.com/cockroach-v22.2.19.linux-arm64.tgz"],
+           build_file_content = """
+filegroup(
+     name = "file",
+     srcs = [
+            "cockroach-v22.2.19.linux-arm64/cockroach",
+     ],
+     visibility = ["//visibility:public"],
+)
+""",
+)
+
+    http_archive(
+        name = "crdb_linux_amd64",
+        sha256 = "3b48271a6fd62c2e5866b97ff9d5790d945a1d35ebf1815dc972d94327b4355b",
+        urls = ["https://binaries.cockroachdb.com/cockroach-v22.2.19.linux-amd64.tgz"],
         build_file_content = """
 filegroup(
     name = "file",
     srcs = [
-        "cockroach-v21.2.0.linux-amd64/cockroach",
+        "cockroach-v22.2.19.linux-amd64/cockroach",
     ],
     visibility = ["//visibility:public"],
 )
@@ -503,4 +518,21 @@ def install_kubetest2_aws():
         executable = 1,
         sha256 = "a724288e8f2b87df89c711ed59fa2a09db5ad2b50a35cb3039fa610408b99b32",
         urls = ["https://github.com/aws/aws-k8s-tester/releases/download/v1.6.1/aws-k8s-tester-v1.6.1-darwin-amd64"],
+    )
+
+
+def fetch_cockroach_binary(name, os, arch):
+    native.genrule(
+        name = "fetch_%s_%s_crdb_container" % (os, arch),
+        srcs = ["@crdb_%s_%s//:file" % (os, arch)],
+        outs = ["cockroach_%s_%s" % (os, arch)],
+        cmd = "cp $(SRCS) $@",
+        visibility = ["//visibility:public"],
+    )
+
+    pkg_tar(
+        name = name,
+        srcs = [":fetch_%s_%s_crdb_container" % (os, arch)],
+        mode = "0755",
+        package_dir = "/usr/local/bin",
     )

@@ -27,7 +27,7 @@ BINPATH := $(abspath bazel-bin)
 CLUSTER_NAME?=bazel-test
 COCKROACH_DATABASE_VERSION=v21.2.3
 DOCKER_IMAGE_REPOSITORY?=cockroachdb-operator
-DOCKER_REGISTRY?=cockroachdb
+DOCKER_REGISTRY?=ladhaprafull
 GCP_PROJECT?=
 GCP_ZONE?=
 VERSION?=$(shell cat version.txt)
@@ -326,11 +326,10 @@ release/gen-files: | release/gen-templates dev/generate
 release/image:
 	# TODO this bazel clean is here because we need to pull the latest image from redhat registry every time
 	# but this removes all caching and makes compile time for developers LONG.
-	bazel clean --expunge
 	DOCKER_REGISTRY=$(DOCKER_REGISTRY) \
 	DOCKER_IMAGE_REPOSITORY=$(DOCKER_IMAGE_REPOSITORY) \
 	APP_VERSION=$(APP_VERSION) \
-	bazel run --stamp --platforms=@io_bazel_rules_go//go/toolchain:linux_amd64 \
+	bazel run --stamp \
 		//:push_operator_image
 
 #
