@@ -113,6 +113,10 @@ func (b JobBuilder) buildPodTemplate() corev1.PodTemplateSpec {
 		pod.Spec.TopologySpreadConstraints = b.Spec().TopologySpreadConstraints
 	}
 
+	if len(b.Spec().NodeSelector) > 0 {
+		pod.Spec.NodeSelector = b.Spec().NodeSelector
+	}
+
 	secret := b.GetImagePullSecret()
 	if secret != nil {
 		local := corev1.LocalObjectReference{
