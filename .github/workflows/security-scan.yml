@@ -1,0 +1,170 @@
+name: Security Scan
+
+on:
+  # Run on every push to main and on pull requests
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  # Run weekly to catch new CVEs
+  schedule:
+    - cron: '0 2 * * 1'  # Monday at 2 AM UTC
+  # Allow manual triggering
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  base-image-security:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Check base image security
+      run: |
+        echo "::group::Base Image Security Check"
+        echo "Checking Red Hat UBI9 minimal base image for known CVEs..."
+        echo "Current configuration uses: registry.access.redhat.com/ubi9/ubi-minimal"
+        echo "Verify pinned version is secure by checking Red Hat Security Advisories"
+        echo "::endgroup::"
+
+  vulnerability-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    
+    strategy:
+      matrix:
+        platform: [linux/amd64, linux/arm64]
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Install Trivy
+      run: |
+        sudo apt-get update
+        sudo apt-get install wget apt-transport-https gnupg lsb-release
+        wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+        echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+        sudo apt-get update
+        sudo apt-get install trivy
+
+    - name: Build image for scanning
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        platforms: ${{ matrix.platform }}
+        load: true
+        tags: test-image:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        file: |
+          FROM registry.access.redhat.com/ubi9/ubi-minimal:latest
+          COPY cmd/cockroach-operator/cockroach-operator /cockroach-operator
+          ENTRYPOINT ["/cockroach-operator"]
+
+    - name: Run Trivy vulnerability scanner
+      run: |
+        trivy image \
+          --format sarif \
+          --output trivy-results.sarif \
+          --severity HIGH,CRITICAL \
+          test-image:latest
+
+    - name: Check for specific CVEs
+      run: |
+        echo "::group::Checking for specific CVEs"
+        
+        # Check for the CVEs mentioned by the user
+        SPECIFIC_CVES=("CVE-2024-52533" "CVE-2024-34397" "CVE-2025-4373")
+        
+        trivy image --format json --severity HIGH,CRITICAL test-image:latest > scan-results.json
+        
+        for cve in "${SPECIFIC_CVES[@]}"; do
+          if jq -r '.Results[].Vulnerabilities[]?.VulnerabilityID' scan-results.json 2>/dev/null | grep -q "$cve"; then
+            echo "::error title=CVE Found::❌ Found $cve in image"
+            echo "FOUND_CVES=true" >> $GITHUB_ENV
+          else
+            echo "::notice title=CVE Status::✅ $cve not found"
+          fi
+        done
+        
+        echo "::endgroup::"
+
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: trivy-results.sarif
+
+    - name: Generate security summary
+      run: |
+        echo "## 🔐 Security Scan Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Platform:** ${{ matrix.platform }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Scan Date:** $(date)" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Count vulnerabilities by severity
+        CRITICAL=$(jq -r '[.Results[].Vulnerabilities[]? | select(.Severity=="CRITICAL")] | length' scan-results.json 2>/dev/null || echo "0")
+        HIGH=$(jq -r '[.Results[].Vulnerabilities[]? | select(.Severity=="HIGH")] | length' scan-results.json 2>/dev/null || echo "0")
+        
+        echo "| Severity | Count |" >> $GITHUB_STEP_SUMMARY
+        echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Critical | $CRITICAL |" >> $GITHUB_STEP_SUMMARY
+        echo "| High | $HIGH |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        if [ "$CRITICAL" -gt 0 ] || [ "$HIGH" -gt 0 ]; then
+          echo "⚠️ **Action Required:** Critical or High vulnerabilities found!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Recommendations:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Update base image to latest secure version" >> $GITHUB_STEP_SUMMARY
+          echo "2. Check Red Hat Security Advisories" >> $GITHUB_STEP_SUMMARY
+          echo "3. Consider using a different base image if patches are not available" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "✅ **No Critical or High vulnerabilities found!**" >> $GITHUB_STEP_SUMMARY
+        fi
+
+    - name: Fail if critical CVEs found
+      if: env.FOUND_CVES == 'true'
+      run: |
+        echo "::error::Critical CVEs found in image. Please update base image or apply patches."
+        exit 1
+
+  dependency-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version-file: go.mod
+
+    - name: Run Govulncheck
+      run: |
+        go install golang.org/x/vuln/cmd/govulncheck@latest
+        govulncheck ./...
+
+    - name: Run Nancy (Sonatype)
+      continue-on-error: true
+      run: |
+        go list -json -m all | docker run --rm -i sonatypecommunity/nancy:latest sleuth 

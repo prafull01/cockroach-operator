@@ -1,0 +1,11 @@
+# Trivy ignore file for cockroach-operator
+# Use this to temporarily ignore known CVEs that are being addressed
+# Format: CVE-YYYY-NNNNN
+
+# Example: Temporarily ignore while patches are being applied
+# CVE-2024-52533
+# CVE-2024-34397
+# CVE-2025-4373
+
+# Add specific CVEs here that you need to temporarily ignore
+# Always include a comment explaining why and when it will be addressed 

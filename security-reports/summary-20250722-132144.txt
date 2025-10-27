@@ -1,0 +1,18 @@
+Vulnerability Scan Summary
+==========================
+Timestamp: Tue Jul 22 13:23:04 IST 2025
+Image: cockroachdb/cockroach-operator:v2.18.2
+
+Trivy Results:
+-------------
+  Critical: 0
+  High: 0
+  Medium: 0
+
+Recommendations:
+---------------
+1. Update base image to latest secure version
+2. Review and apply security patches
+3. Consider using distroless or minimal base images
+4. Set up automated vulnerability scanning in CI/CD
+5. Monitor security advisories for your base image

@@ -1,0 +1,5 @@
+
+registry.access.redhat.com/ubi8/ubi-minimal:latest (redhat 8.10)
+================================================================
+Total: 0 (HIGH: 0, CRITICAL: 0)
+
